@@ -217,12 +217,10 @@ def find_and_validate_credit_cards(filename):
         else:
             invalid_cards.append(clean_number)
 
-    with open("result_11.txt", "w") as f:
-        f.write("VALID CARDS:\n")
+    with open("/Users/olga/Desktop/result11.txt", "w") as f:
         for card in valid_cards:
             f.write(card + "\n")
 
-        f.write("\nINVALID CARDS:\n")
         for card in invalid_cards:
             f.write(card + "\n")
 
@@ -252,3 +250,17 @@ def compare_files(file1, file2):
         print("\nЕсть только во втором файле:")
         for line in only_in_file2:
             print(line)
+
+
+
+if __name__ == "__main__":
+    filename = "/Users/olga/Desktop/666.txt"
+    result = find_and_validate_credit_cards(filename)
+
+
+for i in range(1,3):
+    file1 = "/Users/olga/Desktop/result11.txt"
+    file2 = "/Users/olga/Desktop/result"+ str(i) + ".txt"
+    comparison = compare_files(file1, file2)
+
+
