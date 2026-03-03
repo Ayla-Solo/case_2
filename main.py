@@ -1,5 +1,100 @@
+#3
 import re
 
+
+def find_system_info(text):
+    with open(log_file_name, 'r', encoding='utf-8') as file:
+        log_text = file.read()
+
+    num = r'(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])'
+
+    ip_pattern = r'\b(' + num + r'\.' + num + r'\.' + num + r'\.' + num + r')\b'
+
+    email_pattern = r'\b[a-zA-Z0-9]+([.-+_%][a-zA-Z0-9]+)*@[a-zA-Z0-9]+([.-][a-zA-Z0-9]+)*\.[a-zA-Z]{2,}\b'
+    # [a-zA-Z0-9_] то же самое что \w
+    file_pattern = r'\b[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-]+\b'
+
+    found_ip = [match.group(0) for match in re.finditer(ip_pattern, text)]
+
+    found_file = re.findall(file_pattern, text)
+    found_email = [match.group(0) for match in re.finditer(email_pattern, text)]
+# finditer возвращает объект совпадения где много инфы
+    result = {
+        'ip':
+    list(dict.fromkeys(found_ip)),
+        'file':
+    list(dict.fromkeys(found_file)),
+        'email':
+    list(dict.fromkeys(found_email))
+    }
+# словарь с тремя ключами. dict.fromkeys(found_ip) создает словарь где ключи это элементы списка(дубликаты удаляются)
+ # list юерет ключи из словаря и создает из них список , если через set то порядок теряется
+    return result
+
+
+#4
+import re
+import base64
+import codecs
+
+
+def decode_messages(text):
+    with open(log_file_name, 'r', encoding='utf-8') as file:
+        log_text = file.read()
+    result = {'base64': [], 'hex': [], 'rot13': []}
+
+    # Base64
+    base64_pattern = r'[A-Za-z0-9+/]{4,}(?:=){0,2}'
+    base64_matches = re.findall(base64_pattern, text)
+    for encoded in base64_matches:
+        try:
+            decoded = base64.b64decode(encoded).decode('utf-8')
+            result['base64'].append(decoded)
+        except:
+            pass
+
+    # HEX
+    hex_pattern1 = r'0x[0-9A-Fa-f]+'
+    hex_pattern2 = r'(?:\\x[0-9A-Fa-f]{2})+'
+    hex_matches = re.findall(hex_pattern1, text) + re.findall(hex_pattern2, text)
+    for encoded in hex_matches:
+        try:
+            if encoded.startswith('0x'):
+                hex_str = encoded[2:]
+                byte_data = bytes.fromhex(hex_str)
+                decoded = byte_data.decode('utf-8')
+                result['hex'].append(decoded)
+            elif encoded.startswith('\\x'):
+                hex_parts = encoded.split('\\x')[1:]
+                byte_data = bytes([int(part, 16) for part in hex_parts])
+                decoded = byte_data.decode('utf-8')
+                result['hex'].append(decoded)
+        except:
+            pass
+
+    
+    # ROT13
+    rot13_pattern = r'[A-Za-z\s]+'
+    rot13_candidates = re.findall(rot13_pattern, text)
+    for candidate in rot13_candidates:
+        candidate = candidate.strip()
+        if len(candidate) > 3:
+            try:
+                decoded = codecs.decode(candidate, 'rot_13')
+                if re.match(r'^[A-Za-z\s]+$', decoded):
+                    result['rot13'].append(decoded)
+            except:
+                pass
+
+    # Удаляем дубликаты
+    result['base64'] = list(dict.fromkeys(result['base64']))
+    result['hex'] = list(dict.fromkeys(result['hex']))
+    result['rot13'] = list(dict.fromkeys(result['rot13']))
+
+    return result
+
+
+#6
 def normalize_and_validate(text):
     """
     Приводит данные к единому формату и проверяет их на корректность.
@@ -172,83 +267,3 @@ def luhn_check(card_number):
     even_digits = digits[-2::-2]
     checksum = sum(digits_of(i * 2) for i in odd_digits) + sum(even_digits)
     return checksum % 10 == 0
-
-
-
-
-
-
-
-
-
-
-
-# ________________________cards________________
-def luhn_check(card_number):
-    digits = [int(d) for d in card_number]
-    checksum = 0
-    reverse_digits = digits[::-1]
-
-    for i, digit in enumerate(reverse_digits):
-        if i % 2 == 1:
-            digit *= 2
-            if digit > 9:
-                digit -= 9
-        checksum += digit
-
-    return checksum % 10 == 0
-
-
-def find_and_validate_credit_cards(filename):
-    with open(filename, "r", encoding="utf-8") as file:
-        text = file.read()
-
-    pattern = r'\b(?:\d[ -]?){16}\b'
-    matches = re.findall(pattern, text)
-
-    valid_cards = []
-    invalid_cards = []
-
-    for match in matches:
-        clean_number = re.sub(r'\D', '', match)
-
-        if len(clean_number) == 16 and luhn_check(clean_number):
-            valid_cards.append(clean_number)
-        else:
-            invalid_cards.append(clean_number)
-
-    with open("result_11.txt", "w") as f:
-        f.write("VALID CARDS:\n")
-        for card in valid_cards:
-            f.write(card + "\n")
-
-        f.write("\nINVALID CARDS:\n")
-        for card in invalid_cards:
-            f.write(card + "\n")
-
-    return {"valid": valid_cards, "invalid": invalid_cards}
-
-#__________data comparison________________
-def compare_files(file1, file2):
-    with open(file1, "r", encoding="utf-8") as f1:
-        set1 = {line.strip() for line in f1}
-
-    with open(file2, "r", encoding="utf-8") as f2:
-        set2 = {line.strip() for line in f2}
-
-    only_in_file1 = set1 - set2
-    only_in_file2 = set2 - set1
-
-    if not only_in_file1 and not only_in_file2:
-        print("Файлы совпадают по содержимому (порядок игнорируется)")
-        return
-
-    if only_in_file1:
-        print("Есть только в первом файле:")
-        for line in only_in_file1:
-            print(line)
-
-    if only_in_file2:
-        print("\nЕсть только во втором файле:")
-        for line in only_in_file2:
-            print(line)
