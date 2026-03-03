@@ -230,13 +230,13 @@ def find_and_validate_credit_cards(filename):
 
 #__________data comparison________________
 def compare_files(file1, file2):
-    with open(file1, "r", encoding="utf-8") as f1: # читаем файл
-        set1 = {line.strip() for line in f1}# записываем множество
+    with open(file1, "r", encoding="utf-8") as f1:
+        set1 = {line.strip() for line in f1}
 
-    with open(file2, "r", encoding="utf-8") as f2:# читаем файл
-        set2 = {line.strip() for line in f2} # записываем множество
+    with open(file2, "r", encoding="utf-8") as f2:
+        set2 = {line.strip() for line in f2}
 
-    only_in_file1 = set1 - set2 # разность двух множеств
+    only_in_file1 = set1 - set2
     only_in_file2 = set2 - set1
 
     if not only_in_file1 and not only_in_file2:
