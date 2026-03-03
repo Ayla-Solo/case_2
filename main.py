@@ -1,3 +1,5 @@
+import re
+
 def normalize_and_validate(text):
     """
     Приводит данные к единому формату и проверяет их на корректность.
@@ -170,3 +172,83 @@ def luhn_check(card_number):
     even_digits = digits[-2::-2]
     checksum = sum(digits_of(i * 2) for i in odd_digits) + sum(even_digits)
     return checksum % 10 == 0
+
+
+
+
+
+
+
+
+
+
+
+# ________________________cards________________
+def luhn_check(card_number: str) -> bool:
+    digits = [int(d) for d in card_number]
+    checksum = 0
+    reverse_digits = digits[::-1]
+
+    for i, digit in enumerate(reverse_digits):
+        if i % 2 == 1:
+            digit *= 2
+            if digit > 9:
+                digit -= 9
+        checksum += digit
+
+    return checksum % 10 == 0
+
+
+def find_and_validate_credit_cards(filename):
+    with open(filename, "r", encoding="utf-8") as file:
+        text = file.read()
+
+    pattern = r'\b(?:\d[ -]?){16}\b'
+    matches = re.findall(pattern, text)
+
+    valid_cards = []
+    invalid_cards = []
+
+    for match in matches:
+        clean_number = re.sub(r'\D', '', match)
+
+        if len(clean_number) == 16 and luhn_check(clean_number):
+            valid_cards.append(clean_number)
+        else:
+            invalid_cards.append(clean_number)
+
+    with open("result_11.txt", "w") as f:
+        f.write("VALID CARDS:\n")
+        for card in valid_cards:
+            f.write(card + "\n")
+
+        f.write("\nINVALID CARDS:\n")
+        for card in invalid_cards:
+            f.write(card + "\n")
+
+    return {"valid": valid_cards, "invalid": invalid_cards}
+
+#__________data comparison________________
+def compare_files(file1, file2):
+    with open(file1, "r", encoding="utf-8") as f1: # читаем файл
+        set1 = {line.strip() for line in f1}# записываем множество
+
+    with open(file2, "r", encoding="utf-8") as f2:# читаем файл
+        set2 = {line.strip() for line in f2} # записываем множество
+
+    only_in_file1 = set1 - set2 # разность двух множеств
+    only_in_file2 = set2 - set1
+
+    if not only_in_file1 and not only_in_file2:
+        print("Файлы совпадают по содержимому (порядок игнорируется)")
+        return
+
+    if only_in_file1:
+        print("Есть только в первом файле:")
+        for line in only_in_file1:
+            print(line)
+
+    if only_in_file2:
+        print("\nЕсть только во втором файле:")
+        for line in only_in_file2:
+            print(line)
