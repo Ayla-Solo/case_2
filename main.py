@@ -184,7 +184,7 @@ def luhn_check(card_number):
 
 
 # ________________________cards________________
-def luhn_check(card_number: str) -> bool:
+def luhn_check(card_number):
     digits = [int(d) for d in card_number]
     checksum = 0
     reverse_digits = digits[::-1]
