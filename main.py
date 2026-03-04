@@ -52,9 +52,9 @@ def find_and_validate_credit_cards(filename):
 
 
 #__________role_2_____
-                                                                  # re-регулярки
-PATTERNS = {                                                                # patterns-шаблоны они состоят из имени шаблона
-                                                                            # и его тела(регулярок)
+
+PATTERNS = {
+
     'Generic Secret (Key/Pass)':
     r'(?i)(api_key|secret|password|token|auth|pwd)'
     r'[\s:="\' ]+([a-zA-Z0-9_\-\.]{12,})',
@@ -65,20 +65,20 @@ PATTERNS = {                                                                # pa
 }
 
 def find_secrets(file_path):
-    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:        # открываем файл, r-для читки
-        content = f.read()                                                    # читаем в одну строку
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        content = f.read()
 
-    found_any = False                                                         #это флажок, он тру если есть хотяб 1 код нашелся
+    found_any = False
 
-    for name, pattern in PATTERNS.items():                                    #Цикл проходит по каждой паре имя и шаблон в словаре шаблонов
-        matches = re.finditer(pattern, content)     #re.finditer() находит все совпадения с регулярным выражением в строке и возвращает их
+    for name, pattern in PATTERNS.items():
+        matches = re.finditer(pattern, content)
         for match in matches:
-            found_any = True                        # если находит совпадение то флаг - тру
-            if name == 'Generic Secret (Key/Pass)': # у Generic Secret (Key/Pass) есть 2 группы: 1) (api_key|secret|password|token|auth|pwd)-
-                                                    #это имя поля типо "password" или token а 2) это [\s:="\' ]+([a-zA-Z0-9_\-\.]{12,}) - тело
-                field = match.group(1)              # здесь (api_key|secret|password|token|auth|pwd)
-                secret_value = match.group(2)       # здесь [\s:="\' ]+([a-zA-Z0-9_\-\.]{12,})
-                                                    # мы две группы именуем, чтобы в принте норм было
+            found_any = True
+            if name == 'Generic Secret (Key/Pass)':
+
+                field = match.group(1)
+                secret_value = match.group(2)
+
                 print(f" {secret_value}")
             else:
                 val = match.group(0)
@@ -133,9 +133,9 @@ for value in result['email']:
 #_____role_4___________
 
 
-def decode_messages(filename):  # Изменил параметр на filename
+def decode_messages(filename):
     with open(filename, 'r', encoding='utf-8') as file:
-        text = file.read()  # Читаем файл в переменную text
+        text = file.read()
 
     result = {'base64': [], 'hex': [], 'rot13': []}
 
@@ -216,7 +216,7 @@ def analyze_logs(log_file_name):
     with open(log_file_name,'r',encoding='utf-8') as file:
         log_text = file.read()
 
-    results = {                                 #это нам дано, сюда будут записываться резы
+    results = {
         'sql_injections': [],
         'xss_attempts': [],
         'suspicious_user_agents': [],
@@ -230,17 +230,17 @@ def analyze_logs(log_file_name):
         'failed_logins': r"(?i)(failed login|authentication failure|invalid password|401)"
     }
 
-    for line in log_text.splitlines():          # log_text.splitlines() разбивает всю строку log_text  на список отдельных строк,
-                                                # используя \n как разделитель.
-        for category, pattern in patterns.items():   # цикл по парам(категория атаки и шаблон ) в словаре шаблонов
-            if re.search(pattern, line):        # re.search() ищет любое совпадение шаблона
-                results[category].append(line.strip()) # Если нашли совпадение, line добавляется в список под соотв-ей категорией в словаре results
+    for line in log_text.splitlines():
 
-    return results             #Возвращает заполненный словарь
+        for category, pattern in patterns.items():
+            if re.search(pattern, line):
+                results[category].append(line.strip())
+
+    return results
 
 res=analyze_logs('777.txt')
-for st in res:                 # Итерируется по категориям атак в словаре res и выводит их на экран
-    print(res[st]  )            # res[st] — список строк лога, где были найдены такие атаки
+for st in res:
+    print(res[st]  )
 
 
 
