@@ -1,8 +1,99 @@
 import re
-
+import base64
+import codecs
 from datetime import datetime
 
 
+# ________________________cards____role_1________________
+def luhn_check(card_number):
+    digits = [int(d) for d in card_number]
+    checksum = 0
+    reverse_digits = digits[::-1]
+
+    for i, digit in enumerate(reverse_digits):
+        if i % 2 == 1:
+            digit *= 2
+            if digit > 9:
+                digit -= 9
+        checksum += digit
+
+    return checksum % 10 == 0
+
+
+def find_and_validate_credit_cards(filename):
+    with open(filename, "r", encoding="utf-8") as file:
+        text = file.read()
+
+    pattern = r'\b(?:\d[ -]?){16}\b'
+    matches = re.findall(pattern, text)
+
+    valid_cards = []
+    invalid_cards = []
+
+    for match in matches:
+        clean_number = re.sub(r'\D', '', match)
+
+        if len(clean_number) == 16 and luhn_check(clean_number):
+            valid_cards.append(clean_number)
+        else:
+            invalid_cards.append(clean_number)
+
+    with open("/Users/olga/Desktop/result11.txt", "w") as f:
+        for card in valid_cards:
+            f.write(card + "\n")
+
+        for card in invalid_cards:
+            f.write(card + "\n")
+
+    return {"valid": valid_cards, "invalid": invalid_cards}
+
+
+
+
+
+#__________role_2_____
+                                                                  # re-регулярки
+PATTERNS = {                                                                # patterns-шаблоны они состоят из имени шаблона
+                                                                            # и его тела(регулярок)
+    'Generic Secret (Key/Pass)':
+    r'(?i)(api_key|secret|password|token|auth|pwd)'
+    r'[\s:="\' ]+([a-zA-Z0-9_\-\.]{12,})',
+    'Google API Key': r'AIza[0-9A-Za-z\-_]{35}',
+    'AWS Access Key': r'AKIA[0-9A-Z]{16}',
+    'Private Key': r'-----BEGIN [A-Z ]+ PRIVATE KEY-----',
+    'High Entropy String (Potential Key)': r'[a-zA-Z0-9/\+=]{32,}'
+}
+
+def find_secrets(file_path):
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:        # открываем файл, r-для читки
+        content = f.read()                                                    # читаем в одну строку
+
+    found_any = False                                                         #это флажок, он тру если есть хотяб 1 код нашелся
+
+    for name, pattern in PATTERNS.items():                                    #Цикл проходит по каждой паре имя и шаблон в словаре шаблонов
+        matches = re.finditer(pattern, content)     #re.finditer() находит все совпадения с регулярным выражением в строке и возвращает их
+        for match in matches:
+            found_any = True                        # если находит совпадение то флаг - тру
+            if name == 'Generic Secret (Key/Pass)': # у Generic Secret (Key/Pass) есть 2 группы: 1) (api_key|secret|password|token|auth|pwd)-
+                                                    #это имя поля типо "password" или token а 2) это [\s:="\' ]+([a-zA-Z0-9_\-\.]{12,}) - тело
+                field = match.group(1)              # здесь (api_key|secret|password|token|auth|pwd)
+                secret_value = match.group(2)       # здесь [\s:="\' ]+([a-zA-Z0-9_\-\.]{12,})
+                                                    # мы две группы именуем, чтобы в принте норм было
+                print(f" Найдено '{field}': {secret_value}")
+            else:
+                val = match.group(0)
+                print(f" Найдено ({name}): {val[:80]}")
+    if not found_any:
+        print('Секреты не найдены')
+
+find_secrets('777.txt')       # задаем файл наш
+
+
+
+
+
+
+#______role_3_________
 def find_system_info(filename):
     with open(filename, 'r', encoding='utf-8') as file:
         text = file.read()
@@ -39,6 +130,125 @@ for value in result['email']:
     print(value)
 
 
+#_____role_4___________
+
+
+def decode_messages(filename):  # Изменил параметр на filename
+    with open(filename, 'r', encoding='utf-8') as file:
+        text = file.read()  # Читаем файл в переменную text
+
+    result = {'base64': [], 'hex': [], 'rot13': []}
+
+    # Base64
+    base64_pattern = r'[A-Za-z0-9+/]{4,}(?:=){0,2}'
+    base64_matches = re.findall(base64_pattern, text)
+    for encoded in base64_matches:
+        try:
+            decoded = base64.b64decode(encoded).decode('utf-8')
+            result['base64'].append(decoded)
+        except:
+            pass
+
+    # HEX
+    hex_pattern1 = r'0x[0-9A-Fa-f]+'
+    hex_pattern2 = r'(?:\\x[0-9A-Fa-f]{2})+'
+    hex_matches = re.findall(hex_pattern1, text) + re.findall(hex_pattern2, text)
+    for encoded in hex_matches:
+        try:
+            if encoded.startswith('0x'):
+                hex_str = encoded[2:]
+                byte_data = bytes.fromhex(hex_str)
+                decoded = byte_data.decode('utf-8')
+                result['hex'].append(decoded)
+            elif encoded.startswith('\\x'):
+                hex_parts = encoded.split('\\x')[1:]
+                byte_data = bytes([int(part, 16) for part in hex_parts])
+                decoded = byte_data.decode('utf-8')
+                result['hex'].append(decoded)
+        except:
+            pass
+
+    # ROT13
+    rot13_pattern = r'[A-Za-z\s]+'
+    rot13_candidates = re.findall(rot13_pattern, text)
+    for candidate in rot13_candidates:
+        candidate = candidate.strip()
+        if len(candidate) > 3:
+            try:
+                decoded = codecs.decode(candidate, 'rot_13')
+                if re.match(r'^[A-Za-z\s]+$', decoded):
+                    result['rot13'].append(decoded)
+            except:
+                pass
+
+    # Удаляем дубликаты
+    result['base64'] = list(dict.fromkeys(result['base64']))
+    result['hex'] = list(dict.fromkeys(result['hex']))
+    result['rot13'] = list(dict.fromkeys(result['rot13']))
+
+    return result
+
+
+# Вызываем функцию с именем файла
+result = decode_messages("666.txt")
+
+# Выводим результаты
+print("Base64 расшифровки:")
+for value in result['base64']:
+    print(f"  {value}")
+
+print("\nHex расшифровки:")
+for value in result['hex']:
+    print(f"  {value}")
+
+print("\nROT13 расшифровки:")
+for value in result['rot13']:
+    print(f"  {value}")
+
+
+
+
+
+#_______role_5_______
+
+
+def analyze_logs(log_file_name):
+    with open(log_file_name,'r',encoding='utf-8') as file:
+        log_text = file.read()
+
+    results = {                                 #это нам дано, сюда будут записываться резы
+        'sql_injections': [],
+        'xss_attempts': [],
+        'suspicious_user_agents': [],
+        'failed_logins': []
+    }
+
+    patterns = {
+        'sql_injections': r"(?i)(UNION\s+SELECT|SELECT.*FROM|OR\s+1=1|DROP\s+TABLE|--|')",  #шаблоны
+        'xss_attempts': r"(?i)(<script|alert\(|onload=|javascript:)",
+        'suspicious_user_agents': r"(?i)(sqlmap|nmap|nikto|acunetix|gobuster|python-requests)",
+        'failed_logins': r"(?i)(failed login|authentication failure|invalid password|401)"
+    }
+
+    for line in log_text.splitlines():          # log_text.splitlines() разбивает всю строку log_text  на список отдельных строк,
+                                                # используя \n как разделитель.
+        for category, pattern in patterns.items():   # цикл по парам(категория атаки и шаблон ) в словаре шаблонов
+            if re.search(pattern, line):        # re.search() ищет любое совпадение шаблона
+                results[category].append(line.strip()) # Если нашли совпадение, line добавляется в список под соотв-ей категорией в словаре results
+
+    return results             #Возвращает заполненный словарь
+
+res=analyze_logs('777.txt')
+for st in res:                 # Итерируется по категориям атак в словаре res и выводит их на экран
+    print(st, res[st]  )            # res[st] — список строк лога, где были найдены такие атаки
+
+
+
+
+
+
+
+#________________role_6_____
 # ТВОЯ функция Луна
 def luhn_check(card_number: str) -> bool:
     """
@@ -216,126 +426,6 @@ if __name__ == "__main__":
                 for item in items:
                     print(f"    - {item}")
 
-
-# ________________________cards________________
-def luhn_check(card_number):
-    digits = [int(d) for d in card_number]
-    checksum = 0
-    reverse_digits = digits[::-1]
-
-    for i, digit in enumerate(reverse_digits):
-        if i % 2 == 1:
-            digit *= 2
-            if digit > 9:
-                digit -= 9
-        checksum += digit
-
-    return checksum % 10 == 0
-
-
-def find_and_validate_credit_cards(filename):
-    with open(filename, "r", encoding="utf-8") as file:
-        text = file.read()
-
-    pattern = r'\b(?:\d[ -]?){16}\b'
-    matches = re.findall(pattern, text)
-
-    valid_cards = []
-    invalid_cards = []
-
-    for match in matches:
-        clean_number = re.sub(r'\D', '', match)
-
-        if len(clean_number) == 16 and luhn_check(clean_number):
-            valid_cards.append(clean_number)
-        else:
-            invalid_cards.append(clean_number)
-
-    with open("/Users/olga/Desktop/result11.txt", "w") as f:
-        for card in valid_cards:
-            f.write(card + "\n")
-
-        for card in invalid_cards:
-            f.write(card + "\n")
-
-    return {"valid": valid_cards, "invalid": invalid_cards}
-
-
-
-
-
-
-
-
-
-                                                                  # re-регулярки
-PATTERNS = {                                                                # patterns-шаблоны они состоят из имени шаблона
-                                                                            # и его тела(регулярок)
-    'Generic Secret (Key/Pass)':
-    r'(?i)(api_key|secret|password|token|auth|pwd)'
-    r'[\s:="\' ]+([a-zA-Z0-9_\-\.]{12,})',
-    'Google API Key': r'AIza[0-9A-Za-z\-_]{35}',
-    'AWS Access Key': r'AKIA[0-9A-Z]{16}',
-    'Private Key': r'-----BEGIN [A-Z ]+ PRIVATE KEY-----',
-    'High Entropy String (Potential Key)': r'[a-zA-Z0-9/\+=]{32,}'
-}
-
-def find_secrets(file_path):
-    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:        # открываем файл, r-для читки
-        content = f.read()                                                    # читаем в одну строку
-
-    found_any = False                                                         #это флажок, он тру если есть хотяб 1 код нашелся
-
-    for name, pattern in PATTERNS.items():                                    #Цикл проходит по каждой паре имя и шаблон в словаре шаблонов
-        matches = re.finditer(pattern, content)     #re.finditer() находит все совпадения с регулярным выражением в строке и возвращает их
-        for match in matches:
-            found_any = True                        # если находит совпадение то флаг - тру
-            if name == 'Generic Secret (Key/Pass)': # у Generic Secret (Key/Pass) есть 2 группы: 1) (api_key|secret|password|token|auth|pwd)-
-                                                    #это имя поля типо "password" или token а 2) это [\s:="\' ]+([a-zA-Z0-9_\-\.]{12,}) - тело
-                field = match.group(1)              # здесь (api_key|secret|password|token|auth|pwd)
-                secret_value = match.group(2)       # здесь [\s:="\' ]+([a-zA-Z0-9_\-\.]{12,})
-                                                    # мы две группы именуем, чтобы в принте норм было
-                print(f" Найдено '{field}': {secret_value}")
-            else:
-                val = match.group(0)
-                print(f" Найдено ({name}): {val[:80]}")
-    if not found_any:
-        print('Секреты не найдены')
-
-find_secrets('777.txt')       # задаем файл наш
-
-
-
-
-def analyze_logs(log_file_name):
-    with open(log_file_name,'r',encoding='utf-8') as file:
-        log_text = file.read()
-
-    results = {                                 #это нам дано, сюда будут записываться резы
-        'sql_injections': [],
-        'xss_attempts': [],
-        'suspicious_user_agents': [],
-        'failed_logins': []
-    }
-
-    patterns = {
-        'sql_injections': r"(?i)(UNION\s+SELECT|SELECT.*FROM|OR\s+1=1|DROP\s+TABLE|--|')",  #шаблоны
-        'xss_attempts': r"(?i)(<script|alert\(|onload=|javascript:)",
-        'suspicious_user_agents': r"(?i)(sqlmap|nmap|nikto|acunetix|gobuster|python-requests)",
-        'failed_logins': r"(?i)(failed login|authentication failure|invalid password|401)"
-    }
-
-    for line in log_text.splitlines():          # log_text.splitlines() разбивает всю строку log_text  на список отдельных строк,
-                                                # используя \n как разделитель.
-        for category, pattern in patterns.items():   # цикл по парам(категория атаки и шаблон ) в словаре шаблонов
-            if re.search(pattern, line):        # re.search() ищет любое совпадение шаблона
-                results[category].append(line.strip()) # Если нашли совпадение, line добавляется в список под соотв-ей категорией в словаре results
-
-    return results             #Возвращает заполненный словарь
-
-res=analyze_logs('777.txt')
-for st in res:                 # Итерируется по категориям атак в словаре res и выводит их на экран
-    print(st, res[st]  )            # res[st] — список строк лога, где были найдены такие атаки
 
 
 
