@@ -79,10 +79,10 @@ def find_secrets(file_path):
                 field = match.group(1)              # здесь (api_key|secret|password|token|auth|pwd)
                 secret_value = match.group(2)       # здесь [\s:="\' ]+([a-zA-Z0-9_\-\.]{12,})
                                                     # мы две группы именуем, чтобы в принте норм было
-                print(f" Найдено '{field}': {secret_value}")
+                print(f" {secret_value}")
             else:
                 val = match.group(0)
-                print(f" Найдено ({name}): {val[:80]}")
+                print(f" {val[:80]}")
     if not found_any:
         print('Секреты не найдены')
 
@@ -240,7 +240,7 @@ def analyze_logs(log_file_name):
 
 res=analyze_logs('777.txt')
 for st in res:                 # Итерируется по категориям атак в словаре res и выводит их на экран
-    print(st, res[st]  )            # res[st] — список строк лога, где были найдены такие атаки
+    print(res[st]  )            # res[st] — список строк лога, где были найдены такие атаки
 
 
 
