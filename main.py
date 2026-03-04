@@ -49,10 +49,7 @@ def find_and_validate_credit_cards(filename):
 
 
 
-
-
 #__________role_2_____
-
 PATTERNS = {
 
     'Generic Secret (Key/Pass)':
@@ -86,10 +83,7 @@ def find_secrets(file_path):
     if not found_any:
         print('Секреты не найдены')
 
-find_secrets('777.txt')       # задаем файл наш
-
-
-
+find_secrets('777.txt')
 
 
 
@@ -130,9 +124,10 @@ for value in result['email']:
     print(value)
 
 
+
+
+
 #_____role_4___________
-
-
 def decode_messages(filename):
     with open(filename, 'r', encoding='utf-8') as file:
         text = file.read()
@@ -181,7 +176,6 @@ def decode_messages(filename):
             except:
                 pass
 
-    # Удаляем дубликаты
     result['base64'] = list(dict.fromkeys(result['base64']))
     result['hex'] = list(dict.fromkeys(result['hex']))
     result['rot13'] = list(dict.fromkeys(result['rot13']))
@@ -189,10 +183,8 @@ def decode_messages(filename):
     return result
 
 
-# Вызываем функцию с именем файла
 result = decode_messages("666.txt")
 
-# Выводим результаты
 print("Base64 расшифровки:")
 for value in result['base64']:
     print(f"  {value}")
@@ -210,8 +202,6 @@ for value in result['rot13']:
 
 
 #_______role_5_______
-
-
 def analyze_logs(log_file_name):
     with open(log_file_name,'r',encoding='utf-8') as file:
         log_text = file.read()
@@ -241,10 +231,6 @@ def analyze_logs(log_file_name):
 res=analyze_logs('777.txt')
 for st in res:
     print(res[st]  )
-
-
-
-
 
 
 
@@ -425,9 +411,6 @@ if __name__ == "__main__":
                 print(f"  {status}:")
                 for item in items:
                     print(f"    - {item}")
-
-
-
 
 
 
