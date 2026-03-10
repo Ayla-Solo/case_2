@@ -38,7 +38,8 @@ def find_and_validate_credit_cards(filename):
         else:
             invalid_cards.append(clean_number)
 
-    with open("/Users/olga/Desktop/result11.txt", "w") as f:
+    # with open("/Users/olga/Desktop/result11.txt", "w") as f:
+    with open("result11.txt", "w") as f:
         for card in valid_cards:
             f.write(card + "\n")
 
@@ -48,18 +49,18 @@ def find_and_validate_credit_cards(filename):
     return {"valid": valid_cards, "invalid": invalid_cards}
 
 
-
-#__________role_2_____
+# __________role_2_____
 PATTERNS = {
 
     'Generic Secret (Key/Pass)':
-    r'(?i)(api_key|secret|password|token|auth|pwd)'
-    r'[\s:="\' ]+([a-zA-Z0-9_\-\.]{12,})',
+        r'(?i)(api_key|secret|password|token|auth|pwd)'
+        r'[\s:="\' ]+([a-zA-Z0-9_\-\.]{12,})',
     'Google API Key': r'AIza[0-9A-Za-z\-_]{35}',
     'AWS Access Key': r'AKIA[0-9A-Z]{16}',
     'Private Key': r'-----BEGIN [A-Z ]+ PRIVATE KEY-----',
     'High Entropy String (Potential Key)': r'[a-zA-Z0-9/\+=]{32,}'
 }
+
 
 def find_secrets(file_path):
     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
@@ -83,11 +84,11 @@ def find_secrets(file_path):
     if not found_any:
         print('Секреты не найдены')
 
+
 find_secrets('777.txt')
 
 
-
-#______role_3_________
+# ______role_3_________
 def find_system_info(filename):
     with open(filename, 'r', encoding='utf-8') as file:
         text = file.read()
@@ -124,10 +125,7 @@ for value in result['email']:
     print(value)
 
 
-
-
-
-#_____role_4___________
+# _____role_4___________
 def decode_messages(filename):
     with open(filename, 'r', encoding='utf-8') as file:
         text = file.read()
@@ -198,12 +196,9 @@ for value in result['rot13']:
     print(f"  {value}")
 
 
-
-
-
-#_______role_5_______
+# _______role_5_______
 def analyze_logs(log_file_name):
-    with open(log_file_name,'r',encoding='utf-8') as file:
+    with open(log_file_name, 'r', encoding='utf-8') as file:
         log_text = file.read()
 
     results = {
@@ -214,7 +209,7 @@ def analyze_logs(log_file_name):
     }
 
     patterns = {
-        'sql_injections': r"(?i)(UNION\s+SELECT|SELECT.*FROM|OR\s+1=1|DROP\s+TABLE|--|')",  #шаблоны
+        'sql_injections': r"(?i)(UNION\s+SELECT|SELECT.*FROM|OR\s+1=1|DROP\s+TABLE|--|')",  # шаблоны
         'xss_attempts': r"(?i)(<script|alert\(|onload=|javascript:)",
         'suspicious_user_agents': r"(?i)(sqlmap|nmap|nikto|acunetix|gobuster|python-requests)",
         'failed_logins': r"(?i)(failed login|authentication failure|invalid password|401)"
@@ -228,13 +223,13 @@ def analyze_logs(log_file_name):
 
     return results
 
-res=analyze_logs('777.txt')
+
+res = analyze_logs('777.txt')
 for st in res:
-    print(res[st]  )
+    print(res[st])
 
 
-
-#________________role_6_____
+# ________________role_6_____
 # ТВОЯ функция Луна
 def luhn_check(card_number: str) -> bool:
     """
@@ -413,9 +408,7 @@ if __name__ == "__main__":
                     print(f"    - {item}")
 
 
-
-
-#__________data comparison________________
+# __________data comparison________________
 def compare_files(file1, file2):
     with open(file1, "r", encoding="utf-8") as f1:
         set1 = {line.strip() for line in f1}
@@ -431,26 +424,24 @@ def compare_files(file1, file2):
         return
 
     if only_in_file1:
-        print("Есть только в первом файле:")
+        print("Есть только в result11.txt:")
         for line in only_in_file1:
             print(line)
 
     if only_in_file2:
-        print("\nЕсть только во втором файле:")
+        print(f"\nЕсть только в {file2} :")
         for line in only_in_file2:
             print(line)
 
 
-
-for i in range(1,2):
-    file1 = "/Users/olga/Desktop/result11.txt"
-    file2 = "/Users/olga/Desktop/result"+ str(i) + ".txt"
-    comparison = compare_files(file1, file2)
-
-
 if __name__ == "__main__":
-    filename = "/Users/olga/Desktop/666.txt"
+    # filename = "/Users/olga/Desktop/666.txt"
+    filename = "666.txt"
     result = find_and_validate_credit_cards(filename)
-
-
-
+    # на выходе имеем созданный файл result11.txt
+    for i in range(1, 2):
+        # file1 = "/Users/olga/Desktop/result11.txt"
+        # file2 = "/Users/olga/Desktop/result"+ str(i) + ".txt"
+        file1 = "result11.txt"
+        file2 = "result" + str(i) + ".txt"
+        comparison = compare_files(file1, file2)
